@@ -222,6 +222,53 @@ Example error responses:
 - "Price must be positive"
 - "Phone number must be in format: '+1234567890' or '123-456-7890'"
 
+## Filtering and Ordering
+
+The API supports advanced filtering and ordering for all queries:
+
+### Customer Filters
+- `nameIcontains`: Filter by name (case-insensitive)
+- `emailIcontains`: Filter by email (case-insensitive)
+- `createdAtGte`, `createdAtLte`: Filter by date range
+- `phonePattern`: Filter by phone number pattern (e.g., starts with "+1")
+
+### Product Filters
+- `nameIcontains`: Filter by name (case-insensitive)
+- `priceGte`, `priceLte`: Filter by price range
+- `stockGte`, `stockLte`: Filter by stock range
+- `lowStock`: Filter products with stock < 10
+
+### Order Filters
+- `totalAmountGte`, `totalAmountLte`: Filter by total amount range
+- `orderDateGte`, `orderDateLte`: Filter by order date range
+- `customerName`: Filter by customer name (case-insensitive)
+- `productName`: Filter by product name (case-insensitive)
+- `productId`: Filter by specific product ID
+- `customerId`: Filter by specific customer ID
+
+### Ordering
+Use `orderBy` parameter with any field name:
+- Ascending: `orderBy: "name"`
+- Descending: `orderBy: "-name"`
+
+**Example:**
+```graphql
+query {
+  allProducts(priceGte: "100", priceLte: "1000", orderBy: "-stock") {
+    edges {
+      node {
+        id
+        name
+        price
+        stock
+      }
+    }
+  }
+}
+```
+
+See `FILTERING_TESTS.md` for comprehensive filtering examples.
+
 ## Project Structure
 
 - `alx_backend_graphql/` - Main project directory
@@ -231,7 +278,9 @@ Example error responses:
 - `crm/` - CRM application
   - `models.py` - Database models
   - `schema.py` - CRM GraphQL types and mutations
+  - `filters.py` - Django filter classes for queries
 - `seed_db.py` - Database seeding script
+- `FILTERING_TESTS.md` - Comprehensive filtering test examples
 - `manage.py` - Django management script
 
 ## Testing
@@ -240,6 +289,7 @@ Example error responses:
 2. Visit: http://localhost:8000/graphql
 3. Use the GraphiQL interface to test queries and mutations
 4. Check the examples above for sample queries
+5. See `FILTERING_TESTS.md` for filtering and ordering examples
 
 ## License
 
