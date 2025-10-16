@@ -1,9 +1,11 @@
 import graphene
 from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from .models import Customer, Product, Order
+from .filters import CustomerFilter, ProductFilter, OrderFilter
 
 
 # GraphQL Types
@@ -11,18 +13,24 @@ class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
         fields = ('id', 'name', 'email', 'phone', 'created_at', 'orders')
+        filterset_class = CustomerFilter
+        interfaces = (graphene.relay.Node,)
 
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         fields = ('id', 'name', 'price', 'stock', 'created_at', 'orders')
+        filterset_class = ProductFilter
+        interfaces = (graphene.relay.Node,)
 
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
         fields = ('id', 'customer', 'products', 'total_amount', 'order_date')
+        filterset_class = OrderFilter
+        interfaces = (graphene.relay.Node,)
 
 
 # Input Types
@@ -273,21 +281,34 @@ class CreateOrder(graphene.Mutation):
 
 # Query
 class Query(graphene.ObjectType):
-    all_customers = graphene.List(CustomerType)
-    all_products = graphene.List(ProductType)
-    all_orders = graphene.List(OrderType)
+    # Relay connection fields with filtering
+    all_customers = DjangoFilterConnectionField(CustomerType, order_by=graphene.String())
+    all_products = DjangoFilterConnectionField(ProductType, order_by=graphene.String())
+    all_orders = DjangoFilterConnectionField(OrderType, order_by=graphene.String())
+    
+    # Single object queries
     customer = graphene.Field(CustomerType, id=graphene.ID(required=True))
     product = graphene.Field(ProductType, id=graphene.ID(required=True))
     order = graphene.Field(OrderType, id=graphene.ID(required=True))
+    
+    # Custom resolvers with ordering support
+    def resolve_all_customers(self, info, order_by=None, **kwargs):
+        queryset = Customer.objects.all()
+        if order_by:
+            queryset = queryset.order_by(order_by)
+        return queryset
 
-    def resolve_all_customers(self, info):
-        return Customer.objects.all()
+    def resolve_all_products(self, info, order_by=None, **kwargs):
+        queryset = Product.objects.all()
+        if order_by:
+            queryset = queryset.order_by(order_by)
+        return queryset
 
-    def resolve_all_products(self, info):
-        return Product.objects.all()
-
-    def resolve_all_orders(self, info):
-        return Order.objects.all()
+    def resolve_all_orders(self, info, order_by=None, **kwargs):
+        queryset = Order.objects.all()
+        if order_by:
+            queryset = queryset.order_by(order_by)
+        return queryset
 
     def resolve_customer(self, info, id):
         try:
