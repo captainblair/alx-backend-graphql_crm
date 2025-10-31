@@ -5,6 +5,7 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from decimal import Decimal
 from .models import Customer, Product, Order
+from crm.models import Product
 from .filters import CustomerFilter, ProductFilter, OrderFilter
 
 
